@@ -1,81 +1,117 @@
 import pulp as plp
 
-def continuous_optimization():
-    print("\n=== Continuous Variables Optimization ===")
-    model = plp.LpProblem('MRPInverso_Continuous', plp.LpMaximize)
-    X1 = plp.LpVariable('X1', lowBound=0, cat=plp.LpContinuous)
-    X2 = plp.LpVariable('X2', lowBound=0, cat=plp.LpContinuous)
-    
-    # Constraints
-    model += 100*X1 + 150*X2, "Maximize_Profit"
-    model += X1 + X2 <= 10, "Board_Constraint"
-    model += X1 + 2*X2 <= 12, "Memory_Constraint"
-    print(model)
-    model.solve()
-    
-    # Results
-    print("\nOptimal Solution:")
-    for var in model.variables():
-        print(f"{var.name} = {var.varValue}")
-    print(f"Optimal Value: {plp.value(model.objective)}\n")
+def resolver_pl(titulo, tipo_otimizacao, coeficientes_objetivo, restricoes):
+    """
+    Função genérica para resolver um problema de programação linear usando PuLP.
+    Argumentos:
+        titulo (str): O nome do problema a ser exibido.
+        tipo_otimizacao (plp.LpMaximize ou plp.LpMinimize): O objetivo (maximizar ou minimizar).
+        coeficientes_objetivo (list): Lista de coeficientes da função objetivo.
+        restricoes (list of dict): Uma lista de dicionários, onde cada um representa uma restrição.
+    """
+    print(f"\n--- {titulo} ---")
 
-def integer_optimization():
-    print("\n=== Integer Variables Optimization ===")
-    model = plp.LpProblem('MRPInverso_Integer', plp.LpMaximize)
-    X1 = plp.LpVariable('X1', lowBound=0, cat=plp.LpInteger)
-    X2 = plp.LpVariable('X2', lowBound=0, cat=plp.LpInteger)
-    model += 100*X1 + 150*X2, "Maximize_Profit"
-    
-    # Constraints
-    model += X1 + X2 <= 10, "Board_Constraint"
-    model += X1 + 2*X2 <= 12, "Memory_Constraint"
-    model += 48*X1 + 60*X2 <= 480, "Hours_Constraint"
-    model.solve()
-    
-    # Results
-    print("\nOptimal Solution:")
-    for var in model.variables():
-        print(f"{var.name} = {var.varValue}")
-    print(f"Optimal Value: {plp.value(model.objective)}\n")
+    # 1. Cria o modelo
+    modelo = plp.LpProblem(titulo, tipo_otimizacao)
 
-def shortest_path_problem():
-    print("\n=== Shortest Path Optimization ===")
-    # Data
-    arc_names = ["X1", "X2", "X3", "X4", "X5", "X6", "X7"]
-    distances = [41, 50, 44, 37, 27, 45, 4]
-    incidence_matrix = [
-        [1, 1, 1,  0,  0,  0,  0],
-        [1, 0, 0, -1,  0,  0,  0],
-        [0, 0, 1,  0, -1,  0,  0],
-        [0, 0, 0,  1,  0, -1,  0],
-        [0, 1, 0,  0,  1,  0, -1],
-        [0, 0, 0,  0,  0,  1,  1]
-    ]
-    node_balance = [1, 0, 0, 0, 0, 1]
-    cities = ["Lambari", "Três Corações", "São Lourenço", 
-             "São Thomé das Letras", "Caxambu", "Baependi"]
-    model = plp.LpProblem("Shortest_Path", plp.LpMinimize)
-    variables = [plp.LpVariable(name, cat=plp.LpBinary) for name in arc_names]
+    # 2. Cria as variáveis de decisão (assumindo 2 variáveis: x1 e x2)
+    x1 = plp.LpVariable('x1', lowBound=0, cat=plp.LpContinuous)
+    x2 = plp.LpVariable('x2', lowBound=0, cat=plp.LpContinuous)
+    variaveis = [x1, x2]
 
-    model += plp.lpSum(distances[i]*variables[i] for i in range(len(arc_names))), 'Total_Distance'
+    # 3. Adiciona a função objetivo
+    modelo += plp.lpSum([coeficientes_objetivo[i] * variaveis[i] for i in range(len(variaveis))]), "Funcao_Objetivo"
 
-    for node_idx, city in enumerate(cities):
-        constraint = plp.lpSum(
-            incidence_matrix[node_idx][i] * variables[i] 
-            for i in range(len(arc_names))
-        ) == node_balance[node_idx]
-        model += constraint, f"Node_Balance_{city}"
+    # 4. Adiciona as restrições
+    for i, r in enumerate(restricoes):
+        expressao = plp.lpSum([r['coefs'][j] * variaveis[j] for j in range(len(variaveis))])
 
-    status = model.solve()
+        if r['op'] == '<=':
+            modelo += expressao <= r['rhs'], f"Restricao_{i + 1}"
+        elif r['op'] == '>=':
+            modelo += expressao >= r['rhs'], f"Restricao_{i + 1}"
+        elif r['op'] == '==':
+            modelo += expressao == r['rhs'], f"Restricao_{i + 1}"
 
-    print("\nOptimal Path:")
-    for var in model.variables():
-        if var.varValue > 0.9:  
-            print(f"{var.name} = {var.varValue}")
-    print(f"\nMinimum Distance: {plp.value(model.objective)}")
-    print(f"Solver Status: {plp.LpStatus[status]}")
+    # 5. Resolve o modelo
+    modelo.solve()
 
+    # 6. Exibe os resultados
+    print(f"Status: {plp.LpStatus[modelo.status]}")
+    if modelo.status == plp.LpStatusOptimal:
+        print("Solução Ótima:")
+        for var in modelo.variables():
+            print(f"  {var.name} = {var.varValue}")
+        print(f"Valor Ótimo (Z): {plp.value(modelo.objective)}\n")
+    else:
+        print("Não foi encontrada uma solução ótima (o problema pode ser inviável ou ilimitado).\n")
+
+
+# Bloco principal
 if __name__ == "__main__":
-    continuous_optimization()
-    integer_optimization()
-    shortest_path_problem()
+
+    # --- Definição dos Dados dos 5 Problemas ---
+
+    lista_de_problemas = [
+        {
+            "titulo": "Problema 1: Maximizar 4*x1 + 3*x2",
+            "tipo": plp.LpMaximize,
+            "objetivo": [4, 3],
+            "restricoes": [
+                {'coefs': [1, 3], 'op': '<=', 'rhs': 7},
+                {'coefs': [2, 2], 'op': '<=', 'rhs': 8},
+                {'coefs': [1, 1], 'op': '<=', 'rhs': 3},
+                {'coefs': [0, 1], 'op': '<=', 'rhs': 2}
+            ]
+        },
+        {
+            "titulo": "Problema 2: Minimizar 8*x1 + 10*x2",
+            "tipo": plp.LpMinimize,
+            "objetivo": [8, 10],
+            "restricoes": [
+                {'coefs': [-1, 1], 'op': '<=', 'rhs': 2},
+                {'coefs': [4, 5], 'op': '>=', 'rhs': 20},
+                {'coefs': [1, 0], 'op': '<=', 'rhs': 6},
+                {'coefs': [0, 1], 'op': '>=', 'rhs': 4}
+            ]
+        },
+        {
+            "titulo": "Problema 3: Minimizar x1 + 2*x2",
+            "tipo": plp.LpMinimize,
+            "objetivo": [1, 2],
+            "restricoes": [
+                {'coefs': [1, 1], 'op': '>=', 'rhs': 1},
+                {'coefs': [-5, 2], 'op': '>=', 'rhs': -10},
+                {'coefs': [3, 5], 'op': '>=', 'rhs': 15}
+            ]
+        },
+        {
+            "titulo": "Problema 4: Maximizar 4*x1 + 8*x2",
+            "tipo": plp.LpMaximize,
+            "objetivo": [4, 8],
+            "restricoes": [
+                {'coefs': [3, 2], 'op': '<=', 'rhs': 18},
+                {'coefs': [1, 1], 'op': '<=', 'rhs': 5},
+                {'coefs': [1, 0], 'op': '<=', 'rhs': 4}
+            ]
+        },
+        {
+            "titulo": "Problema 5: Maximizar x1 + 3*x2",
+            "tipo": plp.LpMaximize,
+            "objetivo": [1, 3],
+            "restricoes": [
+                {'coefs': [4, 1], 'op': '>=', 'rhs': 30},
+                {'coefs': [10, 2], 'op': '<=', 'rhs': 10}
+            ]
+        }
+    ]
+
+    # --- Execução dos 5 Problemas ---
+
+    for problema in lista_de_problemas:
+        resolver_pl(
+            titulo=problema["titulo"],
+            tipo_otimizacao=problema["tipo"],
+            coeficientes_objetivo=problema["objetivo"],
+            restricoes=problema["restricoes"]
+        )
