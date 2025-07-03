@@ -2,7 +2,7 @@ import pulp as plp
 
 def resolver_pl(titulo, tipo_otimizacao, coeficientes_objetivo, restricoes):
     """
-    Função genérica para resolver um problema de programação linear usando PuLP.
+    Função para resolver um problema de programação linear usando PuLP.
     Argumentos:
         titulo (str): O nome do problema a ser exibido.
         tipo_otimizacao (plp.LpMaximize ou plp.LpMinimize): O objetivo (maximizar ou minimizar).

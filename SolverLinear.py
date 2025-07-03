@@ -1,10 +1,6 @@
 import numpy as np
 import sympy
 
-
-# A biblioteca IPython não é mais necessária para a saída em texto
-# from IPython.display import display, Math
-
 class SOLVER:
     """
     Classe que implementa o método Simplex para resolver problemas de Programação Linear.
