@@ -4,7 +4,8 @@ Este diretório contém scripts Python para resolução de problemas de Pesquisa
 
 ## Descrição dos Arquivos
 
-- `FluxodeRede.py`: Resolve o problema de fluxo máximo em uma rede utilizando a técnica do arco imaginário e o solver de Programação Linear do Google OR-Tools.
+- `FluxodeRede.py`: Resolve o problema de fluxo em uma rede utilizando a técnica do arco imaginário e o solver do Google OR-Tools.
+- `CaminhoMinimo.py`: resolve o problema do caminho mínimo com o solver do Google OR-Tools.
 - `PesquisaLinear.py`: Implementa métodos de pesquisa linear para problemas de fluxo em redes.
 - `PuLPLinear.py`: Utiliza a biblioteca PuLP para modelar e resolver problemas de fluxo máximo via Programação Linear.
 - `SolverLinear.py`: Implementa o método Simplex para resolver problemas de Programação Linear.
